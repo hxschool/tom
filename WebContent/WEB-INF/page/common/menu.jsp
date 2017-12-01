@@ -121,7 +121,7 @@
 				<tomtag:Authority authcode="F-ADMIN" placeholder="" ><li><a href="system/admin/list.thtml" target="main"><tomtag:Message key="txt.sys.admin.list" /></a></li></tomtag:Authority>
 				<tomtag:Authority authcode="F-ROLE" placeholder="" ><li><a href="system/role/list.thtml" target="main"><tomtag:Message key="txt.sys.role.list" /></a></li></tomtag:Authority>
 				<tomtag:Authority authcode="P-SYS-LOG" placeholder="" ><li><a href="system/log/list.thtml" target="main"><tomtag:Message key="txt.sys.log.list" /></a></li></tomtag:Authority>
-				<li><a href="common/about.thtml" target="main"><tomtag:Message key="txt.other.menu.about" /></a></li>
+				<!-- <li><a href="common/about.thtml" target="main"><tomtag:Message key="txt.other.menu.about" /></a></li> -->
 			</ul>
 		</div>
 		</c:if>

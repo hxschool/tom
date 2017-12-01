@@ -53,7 +53,7 @@
 
     <div class="tm_head">
     
-        <div class="tm_head_logo"><a href="http://www.tomexam.com" target="_blank"><img src="skins/images/logo.png" /></a></div>
+        <div class="tm_head_logo"><a href="http://www.greathiit.com" target="_blank"><img src="skins/images/logo.png" /></a></div>
         <div class="tm_head_switch"><a href="javascript:void(0);" onclick="tm_switch_menu()"><img src="skins/images/ico_lines.png" /></a></div>
 
 		<c:if test="${sessionScope.SEN_USERTYPE == '1'}">
@@ -69,7 +69,7 @@
 					${sessionScope.SEN_USERNAME} (${admin.a_realname})
 				</span> |
 				<a href="system/profile.thtml" target="main"><tomtag:Message key="txt.other.account" /></a> |
-				<a href="http://www.tomexam.com/link/?m=feedback" target="_blank"><tomtag:Message key="message.other.feedback" /></a> |
+				<!-- <a href="http://www.tomexam.com/link/?m=feedback" target="_blank"><tomtag:Message key="message.other.feedback" /></a> | -->
 				<a href="javascript:void(0);" onclick="return tm.logout();"><tomtag:Message key="txt.other.menu.logout" /></a>
 			</div>
 		</c:if>

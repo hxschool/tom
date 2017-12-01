@@ -1,11 +1,8 @@
 package org.jasig.cas.client.filter;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
@@ -70,7 +67,9 @@ public class AutoSetUserAdapterFilter implements Filter {
 		String usergid = null;
 
 		Map user = new HashMap();
-		if ("1".equals(usertype)) {
+		String tomUserType = "0";
+		if (!"6".equals(usertype)) {
+			tomUserType = "1";
 			userid = String.valueOf(map.get("a_id"));
 			userstatus = String.valueOf(map.get("a_status"));
 			usersalt = String.valueOf(map.get("a_salt"));
@@ -86,7 +85,7 @@ public class AutoSetUserAdapterFilter implements Filter {
 
 		user.put("user_id", userid);
 		user.put("user_name", username);
-		user.put("user_type", usertype);
+		user.put("user_type", tomUserType);
 		user.put("user_status", userstatus);
 		user.put("user_salt", usersalt);
 		user.put("user_pass", userpass);
@@ -173,24 +172,17 @@ public class AutoSetUserAdapterFilter implements Filter {
 
 			// [{roleId=6}]
 
-			Set<String> set = null;
-
-			String str = (String) attributes.get("roleId");
-			if (str != null && !str.equals("")) {
-				if (str.length() > 2 && str.indexOf('[') == 0 && str.lastIndexOf(']') == str.length() - 1) {
-					String x = str.substring(1, str.length() - 1);
-					String[] array = x.split(",");
-					set = new HashSet(Arrays.asList(array));
-				}
-			}
-
-			String usertype = "1";
 			
-			if (set != null && set.contains("6")) {
-				usertype ="0";
+			String usertype = (String)attributes.get("userType");
+		
+
+			String randPwd = randomPassword();
+			
+			if (!org.apache.commons.lang.StringUtils.isEmpty(usertype)&&usertype.equals("6")) {
+				
 				if (!userService.doCheckUsernameExist(loginname)) {
 					paramMap.put("u_username", loginname);
-					paramMap.put("u_userpass", "admin9695");
+					paramMap.put("u_userpass", randPwd);
 					paramMap.put("u_branchid", attributes.get("office_id"));
 					paramMap.put("u_positionid", attributes.get("userType"));
 					paramMap.put("u_realname", attributes.get("name"));
@@ -200,7 +192,6 @@ public class AutoSetUserAdapterFilter implements Filter {
 					paramMap.put("u_score", "0");
 					paramMap.put("u_address", "");
 					paramMap.put("u_remark", "在线考试系统注册");
-					
 					paramMap.put("u_email", attributes.get("email"));
 					paramMap.put("u_status", 1);
 					
@@ -214,7 +205,7 @@ public class AutoSetUserAdapterFilter implements Filter {
 				boolean ret = adminService.doCheckUsernameExist(loginname);
 				if (!ret) {
 					paramMap.put("a_username", loginname);
-					String userpass = String.valueOf("admin#9695");
+					String userpass = randPwd;
 					String salt = BaseUtil.generateRandomString(10);
 					if (BaseUtil.isNotEmpty(userpass)) {
 						String password = ((Md5Util) WebApplication.getInstance().getSingletonObject(Md5Util.class))
@@ -241,7 +232,7 @@ public class AutoSetUserAdapterFilter implements Filter {
 
 				
 			}
-			Map map = doLogin(usertype, loginname,"admin#9695");
+			Map map = doLogin(usertype, loginname,randPwd);
 			String scode = String.valueOf(map.get("code"));
 			String msgkey = String.valueOf(map.get("msgkey"));
 			int code = BaseUtil.getInt(scode);
@@ -277,6 +268,10 @@ public class AutoSetUserAdapterFilter implements Filter {
 
 		}
 		filterChain.doFilter(request, response);
+	}
+	
+	private String randomPassword(){
+		return String.valueOf((int)((Math.random()*9+1)*100000));
 	}
 
 	@Override

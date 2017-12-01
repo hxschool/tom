@@ -155,7 +155,7 @@
 				</tbody>
 			</table>
 
-			<h2><tomtag:Message key="txt.other.welcome.soft" /></h2>
+			<!-- <h2><tomtag:Message key="txt.other.welcome.soft" /></h2>
 			<table width="100%" border="0" class="tm_param_list">
 				<tbody>
 					<tr>
@@ -185,7 +185,7 @@
 						</td>
 					</tr>
 				</tbody>
-			</table>
+			</table> -->
 		</c:if>
 
 

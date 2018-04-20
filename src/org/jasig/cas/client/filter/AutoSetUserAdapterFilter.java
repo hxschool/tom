@@ -1,6 +1,7 @@
 package org.jasig.cas.client.filter;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -16,7 +17,6 @@ import javax.servlet.http.HttpSession;
 
 import org.apache.log4j.Logger;
 import org.jasig.cas.client.authentication.AttributePrincipal;
-import org.jasig.cas.client.validation.Assertion;
 import org.springframework.jdbc.core.JdbcTemplate;
 
 import com.tom.WebAppConfig;
@@ -24,7 +24,6 @@ import com.tom.core.util.SystemLoggerHelper;
 import com.tom.system.service.IAdminRoleService;
 import com.tom.system.service.IAdminService;
 import com.tom.system.service.IUserService;
-import com.tom.user.dao.ICommonDao;
 import com.tom.util.BaseUtil;
 import com.tom.util.CacheHelper;
 import com.tom.util.Constants;
@@ -34,9 +33,7 @@ import com.tom.util.WebApplication;
 
 public class AutoSetUserAdapterFilter implements Filter {
 
-	
-	private static final Logger logger = Logger.getLogger(AutoSetUserAdapterFilter.class);
-	
+	private static Logger logger = Logger.getLogger(AutoSetUserAdapterFilter.class);
 	@Override
 	public void destroy() {
 
@@ -46,13 +43,17 @@ public class AutoSetUserAdapterFilter implements Filter {
 	private Map<String, Object> getUserByUserName(String usertype, String username) {
 		String sql = "select * from tm_user where u_username=?";
 		if ("1".equals(usertype)) {
+			logger.info("管理员或者教师登录");
 			sql = "select * from tm_admin where a_username=?";
 		}
 
 		JdbcTemplate service = (JdbcTemplate) SpringContextHelper.getBean("jdbcTemplate");
 		Map map  = null;
+		
 		try{
 			 map = service.queryForMap(sql, new Object[] { username });
+			 logger.info("根据用户名:"+username+",查询相关用户信息,返回值:"+map);
+			
 		}catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -69,6 +70,7 @@ public class AutoSetUserAdapterFilter implements Filter {
 		Map user = new HashMap();
 		String tomUserType = "0";
 		if (!"6".equals(usertype)) {
+			logger.info("教师信息授权,设置usertype=1");
 			tomUserType = "1";
 			userid = String.valueOf(map.get("a_id"));
 			userstatus = String.valueOf(map.get("a_status"));
@@ -76,6 +78,7 @@ public class AutoSetUserAdapterFilter implements Filter {
 			userpass = String.valueOf(map.get("a_userpass"));
 			usergid = String.valueOf(map.get("a_roleid"));
 		} else {
+			logger.info("学员信息授权,设置usertype=0");
 			userid = String.valueOf(map.get("u_id"));
 			userstatus = String.valueOf(map.get("u_status"));
 			usersalt = String.valueOf(map.get("u_salt"));
@@ -107,7 +110,7 @@ public class AutoSetUserAdapterFilter implements Filter {
 		}
 		try {
 			Map user = getUserByUserName(usertype, username);
-
+			logger.info("根据用户名:"+username+"获取相关授权信息"+user);
 			if (user == null) {
 				ret.put("code", Integer.valueOf(-3));
 				ret.put("msgkey", "user_not_exsit");
@@ -148,45 +151,60 @@ public class AutoSetUserAdapterFilter implements Filter {
 		 return service.update(sql, new Object[] { userid });
 	 }
 	
-	
+
+/*     */   private int checkLoginStatus(String uid, String sessionid)
+/*     */   {
+/* 106 */     String cache_sessionid = (String)CacheHelper.getCache("SessionCache", "U" + uid);
+/*     */     
+/*     */ 
+/* 109 */     if (BaseUtil.isEmpty(cache_sessionid)) {
+/* 110 */       return 0;
+/*     */     }
+/*     */     
+/*     */ 
+/* 114 */     if (cache_sessionid.equals(sessionid)) {
+/* 115 */       return 1;
+/*     */     }
+/*     */     
+/* 118 */     return -1;
+/*     */   }
 	public final void doFilter(final ServletRequest servletRequest, final ServletResponse servletResponse,
 			final FilterChain filterChain) throws IOException, ServletException {
 		final HttpServletRequest request = (HttpServletRequest) servletRequest;
 		final HttpServletResponse response = (HttpServletResponse) servletResponse;
 		final HttpSession session = request.getSession(false);
-		final Assertion assertion = session != null
-				? (Assertion) session.getAttribute(org.jasig.cas.client.util.AbstractCasFilter.CONST_CAS_ASSERTION)
-				: null;
-		AttributePrincipal principal = (AttributePrincipal) request.getUserPrincipal();
 
+		String uid = String.valueOf(session.getAttribute(Constants.SESSION_USERID));
+		String sessionid = String.valueOf(session.getAttribute(Constants.SESSION_SESSID));
+		
+		int checkcode = checkLoginStatus(uid, sessionid);
+		if (checkcode == 1) {
+			filterChain.doFilter(request, response);
+		}
+		AttributePrincipal principal = (AttributePrincipal) request.getUserPrincipal();
 		java.util.Map<String, Object> attributes = principal.getAttributes();
 		if (attributes != null && attributes.size() > 0) {
-
-			String loginname = attributes.get("login_name").toString();
-			ICommonDao commonDao = (ICommonDao) SpringContextHelper.getBean("commonDaoImp");
+			String	loginname = attributes.get("login_name").toString();
 			IUserService userService = (IUserService) SpringContextHelper.getBean("UserService");
-
 			Map<String, Object> paramMap = new HashMap<String, Object>();
 
-			// 判断当前登录用户是否存在,如果不存在创建用户.如果存在继续相关业务操作
-
-			// [{roleId=6}]
-
+			//需要定义通讯接口
+			String roleId = (String)attributes.get("roleId");
 			
-			String usertype = (String)attributes.get("userType");
-		
-
+			roleId = roleId.replaceAll("[\\[\\]]", "");  
+			
+			String[] roleIds = roleId.split(",");
+			
 			String randPwd = randomPassword();
-			
-			if (!org.apache.commons.lang.StringUtils.isEmpty(usertype)&&usertype.equals("6")) {
-				
+			String usertype = "0";
+			if (roleIds != null && roleIds.length > 0 && Arrays.asList(roleIds).contains("99")) {
 				if (!userService.doCheckUsernameExist(loginname)) {
 					paramMap.put("u_username", loginname);
 					paramMap.put("u_userpass", randPwd);
 					paramMap.put("u_branchid", attributes.get("office_id"));
 					paramMap.put("u_positionid", attributes.get("userType"));
 					paramMap.put("u_realname", attributes.get("name"));
-					paramMap.put("u_no", attributes.get("login_name"));
+					paramMap.put("u_no", attributes.get("no"));
 					paramMap.put("u_phone", attributes.get("mobile"));
 					paramMap.put("u_photo", "");
 					paramMap.put("u_score", "0");
@@ -194,17 +212,14 @@ public class AutoSetUserAdapterFilter implements Filter {
 					paramMap.put("u_remark", "在线考试系统注册");
 					paramMap.put("u_email", attributes.get("email"));
 					paramMap.put("u_status", 1);
-					
-					
 					userService.addUser(paramMap);
 				}
-				
 			} else {
+				usertype = "1";
 				IAdminService adminService = (IAdminService) SpringContextHelper.getBean("AdminService");
-
 				boolean ret = adminService.doCheckUsernameExist(loginname);
 				if (!ret) {
-					paramMap.put("a_username", loginname);
+					
 					String userpass = randPwd;
 					String salt = BaseUtil.generateRandomString(10);
 					if (BaseUtil.isNotEmpty(userpass)) {
@@ -215,13 +230,14 @@ public class AutoSetUserAdapterFilter implements Filter {
 					String teacherRoleId = WebAppConfig.GLOBAL_CONFIG_PROPERTIES.getProperty("teacherRoleId");		
 					paramMap.put("a_salt", salt);
 					paramMap.put("a_roleid", teacherRoleId);
-					paramMap.put("a_username", attributes.get("login_name"));
+					paramMap.put("a_username", loginname);
 					paramMap.put("a_realname", attributes.get("name"));
 					paramMap.put("a_photo", "");
 					paramMap.put("a_phone", attributes.get("mobile"));
 					paramMap.put("a_email", attributes.get("email"));
 					paramMap.put("a_status", 1);
 					paramMap.put("a_remark", "");
+					
 					try {
 						adminService.addAdmin(paramMap);
 					} catch (Exception e) {
@@ -229,20 +245,19 @@ public class AutoSetUserAdapterFilter implements Filter {
 					}
 
 				}
-
-				
 			}
 			Map map = doLogin(usertype, loginname,randPwd);
 			String scode = String.valueOf(map.get("code"));
 			String msgkey = String.valueOf(map.get("msgkey"));
 			int code = BaseUtil.getInt(scode);
-
+			logger.info("登录并授权:授权码"+code);
 			if (code == 1) {
 				Object object = map.get("data");
+				logger.info("登录并授权:获取登录数据"+object);
 				if (object != null) {
 					Map user = (Map) object;
-					String sessionid = BaseUtil.generateRandomString(20);
-					String uid = String.valueOf(user.get("user_id"));
+					sessionid = BaseUtil.generateRandomString(20);
+					uid = String.valueOf(user.get("user_id"));
 					String usergid = String.valueOf(user.get("user_gid"));
 					session.setAttribute(Constants.SESSION_USERID, uid);
 					session.setAttribute(Constants.SESSION_USERNAME, String.valueOf(user.get("user_name")));

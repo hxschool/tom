@@ -31,7 +31,7 @@
         <div class="tm_container">
         	<div class="tm_navtitle">
             	<h1><tomtag:Message key="txt.other.navhome.welcome" /></h1>
-                <span><tomtag:Message key="txt.other.navhome.welcome_tip" /></span>
+                <span><tomtag:Message key="txt.other.navhome.welcome_tip" />  </span>
             </div>
         </div>
 
@@ -155,16 +155,16 @@
 				</tbody>
 			</table>
 
-			<!-- <h2><tomtag:Message key="txt.other.welcome.soft" /></h2>
+			 <h2><tomtag:Message key="txt.other.welcome.soft" /></h2>
 			<table width="100%" border="0" class="tm_param_list">
 				<tbody>
 					<tr>
 						<th width="150"><tomtag:Message key="txt.other.welcome.soft.version" /></th>
 						<td>
-							<tomtag:Util action="version" />
+							哈尔滨信息工程学院<div style="color:#fff"><tomtag:Util action="version" /></div>
 						</td>
 					</tr>
-					<tr>
+					<!-- <tr>
 						<th><tomtag:Message key="txt.other.welcome.soft.contract" /></th>
 						<td>
 							<a href="mailto:admin@tomexam.com"><tomtag:Message key="txt.other.welcome.soft.contract.email" /></a>
@@ -175,7 +175,7 @@
 							-
 							<a target="_blank" href="http://wpa.qq.com/msgrd?v=3&uin=43014034&site=qq&menu=yes"><tomtag:Message key="txt.other.welcome.soft.contract.qq" /></a>
 						</td>
-					</tr>
+					</tr> -->
 					<tr>
 						<th><tomtag:Message key="txt.other.welcome.soft.use_help" /></th>
 						<td>
@@ -185,7 +185,7 @@
 						</td>
 					</tr>
 				</tbody>
-			</table> -->
+			</table> 
 		</c:if>
 
 

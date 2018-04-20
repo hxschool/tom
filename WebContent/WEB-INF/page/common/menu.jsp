@@ -93,10 +93,10 @@
 			<ul>
 				<tomtag:Authority authcode="F-COURSE" placeholder="" ><li><a href="system/course/list.thtml" target="main"><tomtag:Message key="txt.sys.course.list" /></a></li></tomtag:Authority>
 				<tomtag:Authority authcode="F-COURSE-CATEGORY" placeholder="" ><li><a href="system/course/category/list.thtml" target="main"><tomtag:Message key="txt.sys.course.category.list" /></a></li></tomtag:Authority>
-				<tomtag:Authority authcode="F-COURSE-TEACHER" placeholder="" ><li><a href="system/course/teacher/list.thtml" target="main"><tomtag:Message key="txt.sys.course.teacher.list" /></a></li></tomtag:Authority>
+				<!-- 	<tomtag:Authority authcode="F-COURSE-TEACHER" placeholder="" ><li><a href="system/course/teacher/list.thtml" target="main"><tomtag:Message key="txt.sys.course.teacher.list" /></a></li></tomtag:Authority>-->
 			</ul>
 		</div>
-			
+		<!-- 	
 		<div class="tm_menu_item clearfix">
 			<h2><a href="javascript:void(0);" onclick="tm_toggle_menu(this)" class="tmc_menu_user"><tomtag:Message key="txt.other.menu.admin.users" /></a></h2>
 			<ul style="display:none">
@@ -105,7 +105,7 @@
 				<tomtag:Authority authcode="F-UPOSITION" placeholder="" ><li><a href="system/userposition/list.thtml" target="main"><tomtag:Message key="txt.sys.userposition.list" /></a></li></tomtag:Authority>
 			</ul>
 		</div>
-			
+			-->
 		<div class="tm_menu_item clearfix">
 			<h2><a href="javascript:void(0);" onclick="tm_toggle_menu(this)" class="tmc_menu_interaction"><tomtag:Message key="txt.other.menu.admin.interaction" /></a></h2>
 			<ul style="display:none">
@@ -117,14 +117,15 @@
 		<div class="tm_menu_item clearfix">
 			<h2><a href="javascript:void(0);" onclick="tm_toggle_menu(this)" class="tmc_menu_system"><tomtag:Message key="txt.other.menu.admin.system" /></a></h2>
 			<ul style="display:none">
-				<tomtag:Authority authcode="F-SYS" placeholder="" ><li><a href="system/config/list.thtml" target="main"><tomtag:Message key="txt.sys.config.list" /></a></li></tomtag:Authority>
+				<!--<tomtag:Authority authcode="F-SYS" placeholder="" ><li><a href="system/config/list.thtml" target="main"><tomtag:Message key="txt.sys.config.list" /></a></li></tomtag:Authority>
 				<tomtag:Authority authcode="F-ADMIN" placeholder="" ><li><a href="system/admin/list.thtml" target="main"><tomtag:Message key="txt.sys.admin.list" /></a></li></tomtag:Authority>
-				<tomtag:Authority authcode="F-ROLE" placeholder="" ><li><a href="system/role/list.thtml" target="main"><tomtag:Message key="txt.sys.role.list" /></a></li></tomtag:Authority>
+				<tomtag:Authority authcode="F-ROLE" placeholder="" ><li><a href="system/role/list.thtml" target="main"><tomtag:Message key="txt.sys.role.list" /></a></li></tomtag:Authority>-->
 				<tomtag:Authority authcode="P-SYS-LOG" placeholder="" ><li><a href="system/log/list.thtml" target="main"><tomtag:Message key="txt.sys.log.list" /></a></li></tomtag:Authority>
-				<!-- <li><a href="common/about.thtml" target="main"><tomtag:Message key="txt.other.menu.about" /></a></li> -->
+				<!--<li><a href="common/about.thtml" target="main"><tomtag:Message key="txt.other.menu.about" /></a></li> -->
 			</ul>
 		</div>
 		</c:if>
+		
 
 
 		<c:if test="${sessionScope.SEN_USERTYPE == '0'}">

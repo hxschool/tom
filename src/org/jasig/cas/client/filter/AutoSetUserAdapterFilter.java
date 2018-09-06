@@ -34,6 +34,9 @@ import com.tom.util.WebApplication;
 public class AutoSetUserAdapterFilter implements Filter {
 
 	private static Logger logger = Logger.getLogger(AutoSetUserAdapterFilter.class);
+	
+	private final static String TEACHER_USER_TYPE="1";
+	private final static String STUDENT_USER_TYPE="0";
 	@Override
 	public void destroy() {
 
@@ -42,25 +45,16 @@ public class AutoSetUserAdapterFilter implements Filter {
 
 	private Map<String, Object> getUserByUserName(String usertype, String username) {
 		String sql = "select * from tm_user where u_username=?";
-		if ("1".equals(usertype)) {
+		if (TEACHER_USER_TYPE.equals(usertype)) {
 			logger.info("管理员或者教师登录");
 			sql = "select * from tm_admin where a_username=?";
 		}
 
 		JdbcTemplate service = (JdbcTemplate) SpringContextHelper.getBean("jdbcTemplate");
-		Map map  = null;
+
+		Map map = service.queryForMap(sql, new Object[] { username });
+		logger.info("根据用户名:" + username + ",查询相关用户信息,返回值:" + map);
 		
-		try{
-			 map = service.queryForMap(sql, new Object[] { username });
-			 logger.info("根据用户名:"+username+",查询相关用户信息,返回值:"+map);
-			
-		}catch (Exception e) {
-			e.printStackTrace();
-		}
-		
-		if (map == null) {
-			return null;
-		}
 		String userid = null;
 		String userstatus = null;
 		String usersalt = null;
@@ -69,8 +63,8 @@ public class AutoSetUserAdapterFilter implements Filter {
 
 		Map user = new HashMap();
 		String tomUserType = "0";
-		if (!"6".equals(usertype)) {
-			logger.info("教师信息授权,设置usertype=1");
+		if (TEACHER_USER_TYPE.equals(usertype)) {
+			logger.info("教师信息授权,设置USERTYPE:1");
 			tomUserType = "1";
 			userid = String.valueOf(map.get("a_id"));
 			userstatus = String.valueOf(map.get("a_status"));
@@ -152,22 +146,19 @@ public class AutoSetUserAdapterFilter implements Filter {
 	 }
 	
 
-/*     */   private int checkLoginStatus(String uid, String sessionid)
-/*     */   {
-/* 106 */     String cache_sessionid = (String)CacheHelper.getCache("SessionCache", "U" + uid);
-/*     */     
-/*     */ 
-/* 109 */     if (BaseUtil.isEmpty(cache_sessionid)) {
-/* 110 */       return 0;
-/*     */     }
-/*     */     
-/*     */ 
-/* 114 */     if (cache_sessionid.equals(sessionid)) {
-/* 115 */       return 1;
-/*     */     }
-/*     */     
-/* 118 */     return -1;
-/*     */   }
+	private int checkLoginStatus(String uid, String sessionid) {
+		String cache_sessionid = (String) CacheHelper.getCache("SessionCache", "U" + uid);
+
+		if (BaseUtil.isEmpty(cache_sessionid)) {
+			return 0;
+		}
+
+		if (cache_sessionid.equals(sessionid)) {
+			return 1;
+		}
+
+		return -1;
+	}
 	public final void doFilter(final ServletRequest servletRequest, final ServletResponse servletResponse,
 			final FilterChain filterChain) throws IOException, ServletException {
 		final HttpServletRequest request = (HttpServletRequest) servletRequest;
@@ -185,7 +176,7 @@ public class AutoSetUserAdapterFilter implements Filter {
 		java.util.Map<String, Object> attributes = principal.getAttributes();
 		if (attributes != null && attributes.size() > 0) {
 			String	loginname = attributes.get("login_name").toString();
-			IUserService userService = (IUserService) SpringContextHelper.getBean("UserService");
+			
 			Map<String, Object> paramMap = new HashMap<String, Object>();
 
 			//需要定义通讯接口
@@ -196,9 +187,11 @@ public class AutoSetUserAdapterFilter implements Filter {
 			String[] roleIds = roleId.split(",");
 			
 			String randPwd = randomPassword();
-			String usertype = "0";
-			if (roleIds != null && roleIds.length > 0 && Arrays.asList(roleIds).contains("99")) {
-				if (!userService.doCheckUsernameExist(loginname)) {
+			String usertype = STUDENT_USER_TYPE;
+			if (Arrays.asList(roleIds).contains("99")) {
+				IUserService userService = (IUserService) SpringContextHelper.getBean("UserService");
+				boolean ret = userService.doCheckUsernameExist(loginname);
+				if (!ret) {
 					paramMap.put("u_username", loginname);
 					paramMap.put("u_userpass", randPwd);
 					paramMap.put("u_branchid", attributes.get("office_id"));
@@ -215,16 +208,14 @@ public class AutoSetUserAdapterFilter implements Filter {
 					userService.addUser(paramMap);
 				}
 			} else {
-				usertype = "1";
+				usertype = TEACHER_USER_TYPE;
 				IAdminService adminService = (IAdminService) SpringContextHelper.getBean("AdminService");
 				boolean ret = adminService.doCheckUsernameExist(loginname);
 				if (!ret) {
-					
-					String userpass = randPwd;
 					String salt = BaseUtil.generateRandomString(10);
-					if (BaseUtil.isNotEmpty(userpass)) {
+					if (BaseUtil.isNotEmpty(randPwd)) {
 						String password = ((Md5Util) WebApplication.getInstance().getSingletonObject(Md5Util.class))
-								.getMD5ofStr(Constants.SYS_IDENTIFICATION_CODE + userpass + salt);
+								.getMD5ofStr(Constants.SYS_IDENTIFICATION_CODE + randPwd + salt);
 						paramMap.put("a_userpass", password);
 					}
 					String teacherRoleId = WebAppConfig.GLOBAL_CONFIG_PROPERTIES.getProperty("teacherRoleId");		
@@ -237,13 +228,7 @@ public class AutoSetUserAdapterFilter implements Filter {
 					paramMap.put("a_email", attributes.get("email"));
 					paramMap.put("a_status", 1);
 					paramMap.put("a_remark", "");
-					
-					try {
-						adminService.addAdmin(paramMap);
-					} catch (Exception e) {
-						e.printStackTrace();
-					}
-
+					adminService.addAdmin(paramMap);
 				}
 			}
 			Map map = doLogin(usertype, loginname,randPwd);
